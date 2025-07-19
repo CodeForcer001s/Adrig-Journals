@@ -32,7 +32,7 @@ export default function AuthPage(): React.ReactElement {
     const formData = new FormData();
     formData.append('email', email);
     formData.append('password', password);
-    if (!isLogin) formData.append('display_name', displayName);
+    if (!isLogin) formData.append('username', displayName);
 
     startTransition(async () => {
       try {
@@ -123,7 +123,7 @@ export default function AuthPage(): React.ReactElement {
                 </label>
                 <input
                   type="text"
-                  name="display_name"
+                  name="username"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Enter your display name"

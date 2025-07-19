@@ -13,6 +13,9 @@ const DashboardHeader = () => {
     greeting = "Good evening";
   }
 
+  // If no user, don't show personalized greeting
+  if (!user) return null;
+
   return (
     <div className="mb-8">
       <h1 className="text-3xl font-bold text-white">
@@ -30,4 +33,4 @@ const DashboardHeader = () => {
   )
 }
 
-export default DashboardHeader
+export default DashboardHeader;

@@ -4,12 +4,48 @@ import Link from 'next/link';
 import { signout } from '@/utils/supabase/actions';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/utils/context/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isAutoCollapsed, setIsAutoCollapsed] = useState(false);
+
+  // Auto-collapse based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      
+      // Define your breakpoints
+      if (width < 1200) { // Below xl breakpoint
+        setIsAutoCollapsed(true);
+        setIsCollapsed(true);
+      } else {
+        setIsAutoCollapsed(false);
+        // Only expand if it wasn't manually collapsed
+        if (isAutoCollapsed) {
+          setIsCollapsed(false);
+        }
+      }
+    };
+
+    // Check on mount
+    handleResize();
+    
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isAutoCollapsed]);
+
+  // Handle manual toggle (only allow if not auto-collapsed)
+  const handleToggle = () => {
+    if (!isAutoCollapsed) {
+      setIsCollapsed(!isCollapsed);
+    }
+  };
 
   const navigationItems = [
     {
@@ -22,7 +58,16 @@ export default function Sidebar() {
       label: 'Dashboard'
     },
     {
-      href: '/create',
+      href: '/journal',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+        </svg>
+      ),
+      label: 'Entries'
+    },
+    {
+      href: '/journal/new',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -34,15 +79,21 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile backdrop */}
-      <div className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
+      {/* Mobile backdrop - only show when sidebar is open on mobile */}
+      {!isCollapsed && isAutoCollapsed && (
+        <div 
+          onClick={() => setIsCollapsed(true)}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" 
+        />
+      )}
       
       {/* Sidebar */}
       <div className={`
         fixed top-0 left-0 h-full min-h-screen z-50 bg-gradient-to-br from-gray-950 via-black to-gray-900 
         text-white shadow-2xl transition-all duration-500 ease-in-out
         ${isCollapsed ? 'w-16' : 'w-72'}
-        lg:relative lg:translate-x-0 lg:h-full lg:min-h-screen
+        ${isAutoCollapsed && isCollapsed ? '-translate-x-full' : ''}
+        xl:relative xl:translate-x-0 xl:h-full xl:min-h-screen
         border-r border-gray-800/30
         backdrop-blur-xl
       `}>
@@ -53,15 +104,31 @@ export default function Sidebar() {
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gray-700/5 rounded-full blur-3xl animate-pulse delay-1000" />
         </div>
 
-        {/* Toggle button for desktop */}
+        {/* Toggle button */}
         <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden lg:block absolute -right-3 top-6 w-6 h-6 bg-gray-700 hover:bg-gray-600 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-10 border-2 border-gray-600/40"
+          onClick={handleToggle}
+          disabled={isAutoCollapsed}
+          className={`
+            absolute -right-3 top-6 w-6 h-6 bg-gray-700 hover:bg-gray-600 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-10 border-2 border-gray-600/40
+            ${isAutoCollapsed ? 'hidden xl:block opacity-50 cursor-not-allowed' : 'hidden xl:block'}
+          `}
         >
           <svg className={`w-3 h-3 mx-auto text-white transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
+
+        {/* Mobile menu button */}
+        {isAutoCollapsed && (
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className="xl:hidden fixed top-4 left-4 z-60 w-10 h-10 bg-gray-800 hover:bg-gray-700 rounded-lg shadow-lg transition-all duration-300 border border-gray-600/40"
+          >
+            <svg className="w-5 h-5 mx-auto text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
 
         <div className="flex flex-col h-full min-h-screen relative z-10">
           {/* Header */}
@@ -101,6 +168,7 @@ export default function Sidebar() {
                   }
                   ${isCollapsed ? 'justify-center' : ''}
                 `}
+                title={isCollapsed ? item.label : undefined} // Show tooltip when collapsed
               >
                 {/* Animated background on hover */}
                 <div className="absolute inset-0 bg-gradient-to-r from-gray-700/0 to-gray-800/0 group-hover:from-gray-700/20 group-hover:to-gray-800/20 transition-all duration-500 rounded-xl" />
@@ -118,7 +186,7 @@ export default function Sidebar() {
                 )}
                 
                 {/* Active indicator */}
-                {pathname === item.href && (
+                {pathname === item.href && !isCollapsed && (
                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-gray-400 rounded-full shadow-lg shadow-gray-400/50" />
                 )}
               </Link>
@@ -138,6 +206,7 @@ export default function Sidebar() {
                 }
                 ${isCollapsed ? 'justify-center' : ''}
               `}
+              title={isCollapsed ? 'Profile' : undefined}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-gray-700/0 to-gray-800/0 group-hover:from-gray-700/20 group-hover:to-gray-800/20 transition-all duration-500 rounded-xl" />
               <div className={`relative z-10 transition-transform duration-300 ${pathname === '/profile' ? 'scale-110' : 'group-hover:scale-110'}`}>
@@ -163,6 +232,7 @@ export default function Sidebar() {
                   border border-red-500/20 hover:border-red-400/40
                   ${isCollapsed ? 'justify-center' : ''}
                 `}
+                title={isCollapsed ? 'Log Out' : undefined}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 to-pink-500/0 group-hover:from-red-500/10 group-hover:to-pink-500/10 transition-all duration-500 rounded-xl" />
                 <div className="relative z-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12">

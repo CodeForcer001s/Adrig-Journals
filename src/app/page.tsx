@@ -6,6 +6,7 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import StatsCards from '@/components/dashboard/StatsCards';
 import RecentEntries from '@/components/dashboard/RecentEntries';
 import { useAuth } from '@/utils/context/AuthContext';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
@@ -17,56 +18,17 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     setFetchError(null);
     try {
-      console.log('Fetching dashboard data, auth status:', {
-        isAuthenticated: !!user,
-        userEmail: user?.email,
-        authLoading: isLoading,
-        authError
-      });
-  
-      // Use the user from AuthContext instead of making a separate auth call
+      // If user is not authenticated, don't fetch any data
       if (!user) {
-        console.log('User not authenticated, using placeholder data');
-        // Instead of throwing an error, we'll use placeholder data
-        setData({
-          totalEntries: 12,
-          streak: 5,
-          recentEntries: [
-            {
-              id: 'placeholder-1',
-              title: 'My Journey Begins',
-              content: 'Today marks the beginning of my journaling practice. I\'m excited to document my thoughts and experiences.',
-              date: '2023-06-15',
-              media_base64: 'https://source.unsplash.com/random/300x200?journal'
-            },
-            {
-              id: 'placeholder-2',
-              title: 'Reflections on Growth',
-              content: 'Looking back at the past month, I can see significant personal growth in how I approach challenges.',
-              date: '2023-06-10',
-              media_base64: 'https://source.unsplash.com/random/300x200?growth'
-            },
-            {
-              id: 'placeholder-3',
-              title: 'Future Plans',
-              content: 'I\'ve been thinking about my goals for the next quarter. Here are some ideas I want to explore further.',
-              date: '2023-06-05',
-              media_base64: 'https://source.unsplash.com/random/300x200?future'
-            }
-          ]
-        });
         setLoading(false);
         return;
       }
   
       // If user is authenticated, proceed with actual data fetching
-      console.log('User authenticated, fetching real data from Supabase');
       const date30DaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split('T')[0];
   
-      console.log('Making Supabase API calls...');
-      
       // First check if the table exists
       const { error: tableCheckError } = await supabase
         .from('journal_entries')
@@ -87,13 +49,13 @@ export default function DashboardPage() {
         supabase
           .from('journal_entries')
           .select('id')
-          .eq('user_id', user.id) // Make sure to filter by user_id
+          .eq('user_id', user.id)
           .gte('date', date30DaysAgo),
   
         supabase
           .from('journal_entries')
           .select('id, title, content, date, media_base64')
-          .eq('user_id', user.id) // Make sure to filter by user_id
+          .eq('user_id', user.id)
           .order('date', { ascending: false })
           .limit(3),
       ]);
@@ -101,31 +63,22 @@ export default function DashboardPage() {
       // Check for errors in each response
       if (countRes.error) {
         console.error('Count query error:', countRes.error);
-        console.error('Full error object:', JSON.stringify(countRes.error));
         setFetchError(`Count query: ${countRes.error.message || 'Unknown error'}`);
       }
       
       if (last30Res.error) {
         console.error('Last 30 days query error:', last30Res.error);
-        console.error('Full error object:', JSON.stringify(last30Res.error));
         setFetchError(prev => prev ? `${prev}; Last 30 days: ${last30Res.error.message || 'Unknown error'}` : `Last 30 days: ${last30Res.error.message || 'Unknown error'}`);
       }
       
       if (recentRes.error) {
         console.error('Recent entries query error:', recentRes.error);
-        console.error('Full error object:', JSON.stringify(recentRes.error));
         setFetchError(prev => prev ? `${prev}; Recent entries: ${recentRes.error.message || 'Unknown error'}` : `Recent entries: ${recentRes.error.message || 'Unknown error'}`);
       }
   
       if (countRes.error || last30Res.error || recentRes.error) {
         throw new Error('API errors occurred');
       }
-  
-      console.log('Data fetched successfully:', {
-        entriesCount: countRes.count,
-        last30DaysCount: last30Res.data?.length,
-        recentEntriesCount: recentRes.data?.length
-      });
   
       setData({
         totalEntries: countRes.count ?? 0,
@@ -134,20 +87,7 @@ export default function DashboardPage() {
       });
     } catch (error) {
       console.error('Dashboard load failed:', error);
-      // Use placeholder data on error
-      setData({
-        totalEntries: 8,
-        streak: 3,
-        recentEntries: [
-          {
-            id: 'error-1',
-            title: 'Sample Entry',
-            content: 'This is a sample journal entry to demonstrate the layout.',
-            date: '2023-06-01',
-            media_base64: 'https://source.unsplash.com/random/300x200?sample'
-          }
-        ]
-      });
+      setFetchError('Failed to load dashboard data. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -157,7 +97,28 @@ export default function DashboardPage() {
     if (!isLoading) {
       fetchDashboardData();
     }
-  }, [user, isLoading]); // Re-fetch when user or isLoading changes
+  }, [user, isLoading]);
+
+  // Show authentication message if user is not logged in
+  if (!user && !isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh] p-6 text-center">
+        <div className="w-20 h-20 bg-gradient-to-br from-gray-800 to-gray-900 rounded-full flex items-center justify-center mb-6 shadow-xl">
+          <svg className="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-3">Authentication Required</h2>
+        <p className="text-gray-400 max-w-md mb-6">You need to be logged in to view your journal dashboard and entries.</p>
+        <Link 
+          href="/auth" 
+          className="px-5 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition shadow-lg hover:shadow-xl border border-gray-700/30 hover:border-gray-600/30"
+        >
+          Sign In or Create Account
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -184,7 +145,7 @@ export default function DashboardPage() {
           <div className="bg-gray-200 h-24 rounded"></div>
         </div>
       ) : (
-        <StatsCards totalEntries={data?.totalEntries} streak={data?.streak} />
+        <StatsCards totalEntries={data?.totalEntries} />
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -199,31 +160,7 @@ export default function DashboardPage() {
             <RecentEntries entries={data?.recentEntries || []} />
           )}
         </div>
-        <div className="bg-indigo-50 p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold mb-4 text-indigo-800">Journal Tips</h3>
-          <ul className="space-y-3 text-sm">
-            <li className="flex items-start">
-              <span className="text-indigo-600 mr-2">•</span>
-              <span>Write consistently, even if it's just for 5 minutes a day</span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-indigo-600 mr-2">•</span>
-              <span>Use prompts when you're feeling stuck or uninspired</span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-indigo-600 mr-2">•</span>
-              <span>Review past entries to track your growth and patterns</span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-indigo-600 mr-2">•</span>
-              <span>Include both challenges and victories in your entries</span>
-            </li>
-          </ul>
-          <div className="mt-6 p-4 bg-white rounded border border-indigo-100">
-            <h4 className="font-medium text-indigo-700 mb-2">Today's Prompt</h4>
-            <p className="text-gray-700 text-sm italic">"What's one small win you experienced today that you're grateful for?"</p>
-          </div>
-        </div>
+        {/* Remove Journal Tips section */}
       </div>
     </div>
   );

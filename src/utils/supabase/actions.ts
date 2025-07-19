@@ -34,7 +34,7 @@ export const signinWithGoogle = signInWith('google');
 export async function emailSignup(formData: FormData) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
-  const display_name = formData.get('display_name') as string;
+  const username = formData.get('username') as string;
 
   const supabase = await createClient();
 
@@ -42,7 +42,7 @@ export async function emailSignup(formData: FormData) {
     email,
     password,
     options: {
-      data: { display_name },
+      data: { username },
     },
   });
 
