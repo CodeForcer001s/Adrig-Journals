@@ -14,22 +14,27 @@ export default function DashboardPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const supabase = createClient();
   const { user, isLoading, authError } = useAuth();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user?.id !== currentUserId) {
+      setData(null);
+      setCurrentUserId(user?.id || null);
+    }
+  }, [user]);
 
   const fetchDashboardData = async () => {
     setFetchError(null);
     try {
-      // If user is not authenticated, don't fetch any data
       if (!user) {
         setLoading(false);
         return;
       }
-  
-      // If user is authenticated, proceed with actual data fetching
+
       const date30DaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split('T')[0];
-  
-      // First check if the table exists
+
       const { error: tableCheckError } = await supabase
         .from('journal_entries')
         .select('id', { count: 'exact', head: true })
@@ -42,7 +47,6 @@ export default function DashboardPage() {
       }
       
       const [countRes, last30Res, recentRes] = await Promise.all([
-        // Fixed: Filter by user_id for total entries count
         supabase
           .from('journal_entries')
           .select('id', { count: 'exact', head: true })
@@ -62,7 +66,6 @@ export default function DashboardPage() {
           .limit(3),
       ]);
   
-      // Check for errors in each response
       if (countRes.error) {
         console.error('Count query error:', countRes.error);
         setFetchError(`Count query: ${countRes.error.message || 'Unknown error'}`);
@@ -99,9 +102,8 @@ export default function DashboardPage() {
     if (!isLoading) {
       fetchDashboardData();
     }
-  }, [user, isLoading]);
+  }, [user, isLoading, currentUserId]);
 
-  // Show authentication message if user is not logged in
   if (!user && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-[80vh] p-6 text-center">
@@ -147,7 +149,7 @@ export default function DashboardPage() {
           <div className="bg-gray-200 h-24 rounded"></div>
         </div>
       ) : (
-        <StatsCards totalEntries={data?.totalEntries} />
+        <StatsCards totalEntries={data?.totalEntries || 0} />
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -162,7 +164,6 @@ export default function DashboardPage() {
             <RecentEntries entries={data?.recentEntries || []} />
           )}
         </div>
-        {/* Remove Journal Tips section */}
       </div>
     </div>
   );

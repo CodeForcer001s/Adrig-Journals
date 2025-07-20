@@ -31,7 +31,7 @@ export default function StatsCards({ totalEntries }: StatsCardsProps) {
           {/* Stats */}
           <div className="mb-4">
             <p className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2 transition-all duration-300">
-              {totalEntries.toLocaleString()}
+              {totalEntries ? totalEntries.toLocaleString() : '0'}
             </p>
             <p className="text-sm text-gray-400 flex items-center gap-2">
               <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

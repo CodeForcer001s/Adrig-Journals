@@ -3,6 +3,7 @@
 import { createClient } from '../supabase/server';
 import { redirect } from 'next/navigation';
 import type { Provider } from '@supabase/supabase-js';
+import { clearSupabaseData } from '@/utils/auth/logoutUtils';
 
 const signInWith = (provider: Provider) => {
   return async () => {
@@ -68,21 +69,35 @@ export async function emailSignin(formData: FormData) {
 
   if (error) {
     console.error('❌ Signin error:', error.message);
-    throw new Error(error.message); // This will show up in dev overlay
+    return { error: { message: error.message } };
   }
 
   if (!data.user?.email_confirmed_at) {
     redirect('/auth?error=confirm_email');
   }
 
-  redirect('/');
+  // Force session hydration on the server side
+  await supabase.auth.getSession();
+
+  // Instead of redirecting, return success
+  return { success: true };
 }
 
 
 export async function signout() {
   const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect('/auth');
+  await supabase.auth.signOut({ scope: 'global' });
+  
+  // Clear all Supabase data from browser
+  if (typeof window !== 'undefined') {
+    clearSupabaseData();
+    
+    // Force a complete page reload to clear any in-memory state
+    window.location.href = '/auth';
+  } else {
+    // For server-side, use the standard redirect
+    redirect('/auth');
+  }
 }
 
 export async function resetPassword(email: string) {

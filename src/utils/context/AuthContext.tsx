@@ -22,10 +22,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   
+  // In the useEffect hook
   useEffect(() => {
     const supabase = createClient();
-    console.log('Supabase client initialized with URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log('Anon key defined:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
     
     // Check active session
     const checkSession = async () => {
@@ -36,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) {
           console.error('Session check error:', error.message);
           setAuthError(error.message);
+          setUser(null); // Ensure user is null on error
           setIsLoading(false);
           return;
         }
@@ -51,17 +51,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         console.error('Unexpected error during session check:', err);
         setAuthError(err instanceof Error ? err.message : 'Unknown authentication error');
+        setUser(null); // Ensure user is null on error
         setIsLoading(false);
       }
     };
     
     checkSession();
     
-    // Listen for auth changes
+    // Listen for auth changes with improved handling
+    // Inside the AuthProvider component
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state changed:', event);
-        setUser(session?.user || null);
+        if (event === 'SIGNED_OUT') {
+          console.log('User signed out, clearing state');
+          setUser(null);
+          // Force a re-check of the session to ensure we're in sync
+          checkSession();
+        } else if (event === 'SIGNED_IN') {
+          console.log('User signed in, updating state');
+          if (session) {
+            setUser(session.user);
+          }
+          // Force a re-check of the session to ensure we're in sync
+          checkSession();
+        } else if (session) {
+          console.log('Session updated:', session.user.email);
+          setUser(session.user);
+        }
         setIsLoading(false);
       }
     );
