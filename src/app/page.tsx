@@ -42,9 +42,11 @@ export default function DashboardPage() {
       }
       
       const [countRes, last30Res, recentRes] = await Promise.all([
+        // Fixed: Filter by user_id for total entries count
         supabase
           .from('journal_entries')
-          .select('id', { count: 'exact', head: true }),
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id),
   
         supabase
           .from('journal_entries')

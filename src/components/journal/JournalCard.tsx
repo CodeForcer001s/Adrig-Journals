@@ -77,7 +77,7 @@ export default function JournalCard({
           </span>
           <button
             onClick={handleEdit}
-            className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-gray-900/50 hover:scale-110 group/edit"
+            className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-gray-900/50 hover:scale-110 group/edit cursor-pointer"
             title="Edit Entry"
           >
             <svg className="w-4 h-4 text-gray-400 hover:text-gray-200 transition-all duration-300 group-hover/edit:scale-110 group-hover/edit:rotate-12" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -121,7 +121,7 @@ export default function JournalCard({
           
           <button
             onClick={handleDelete}
-            className="px-4 py-3 rounded-lg text-sm font-semibold text-red-400 bg-gradient-to-r from-red-950/30 to-red-900/30 hover:from-red-900/50 hover:to-red-800/50 border border-red-800/30 hover:border-red-700/50 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-red-900/20 group/delete"
+            className="cursor-pointer px-4 py-3 rounded-lg text-sm font-semibold text-red-400 bg-gradient-to-r from-red-950/30 to-red-900/30 hover:from-red-900/50 hover:to-red-800/50 border border-red-800/30 hover:border-red-700/50 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-red-900/20 group/delete"
             title="Delete Entry"
           >
             <svg

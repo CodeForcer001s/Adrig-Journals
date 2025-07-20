@@ -30,7 +30,7 @@ export default function StatsCards({ totalEntries }: StatsCardsProps) {
 
           {/* Stats */}
           <div className="mb-4">
-            <p className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2 transition-all duration-300 group-hover:scale-105">
+            <p className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2 transition-all duration-300">
               {totalEntries.toLocaleString()}
             </p>
             <p className="text-sm text-gray-400 flex items-center gap-2">
