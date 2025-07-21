@@ -1,6 +1,6 @@
-import type { NextConfig } from "next";
+const { NextConfig } = require("next");
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   /* config options here */
   devIndicators: false,
 };
