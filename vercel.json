@@ -1,30 +1,5 @@
 {
-  "version": 2,
   "rewrites": [
-    {
-      "source": "/",
-      "destination": "/auth"
-    },
-    {
-      "source": "/dashboard",
-      "missing": [
-        {
-          "type": "cookie",
-          "key": "auth_token"
-        }
-      ],
-      "destination": "/auth"
-    },
-    {
-      "source": "/:path((?!uk/).*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "x-vercel-ip-country",
-          "value": "GB"
-        }
-      ],
-      "destination": "/uk/:path*"
-    }
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
