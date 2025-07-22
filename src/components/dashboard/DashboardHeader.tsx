@@ -1,7 +1,11 @@
 import React from 'react'
 import { useAuth } from '@/utils/context/AuthContext';
 
-const DashboardHeader = () => {
+interface DashboardHeaderProps {
+  username?: string;
+}
+
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({ username }) => {
   const { user } = useAuth();
   const currentTime = new Date();
   const hour = currentTime.getHours();
@@ -16,10 +20,13 @@ const DashboardHeader = () => {
   // If no user, don't show personalized greeting
   if (!user) return null;
 
+  // Use provided username from backend or fallback to email extraction if not available
+  const displayName = username || user?.email?.split('@')[0] || 'Writer';
+
   return (
     <div className="mb-8">
       <h1 className="text-3xl font-bold text-white">
-        {greeting}, {user?.email?.split('@')[0] || 'Writer'}
+        {greeting}, {displayName}
       </h1>
       <p className="text-gray-300 mt-2">
         Welcome to your personal journal dashboard. Track your writing progress and continue your journey.

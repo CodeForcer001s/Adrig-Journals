@@ -8,8 +8,8 @@ import { clearSupabaseData } from '@/utils/auth/logoutUtils';
 const signInWith = (provider: Provider) => {
   return async () => {
     const supabase = await createClient();
-    const site_url = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL;
-    const auth_callback_url = `${site_url}/auth/callback`;
+    // Use a relative URL instead of an absolute one
+    const auth_callback_url = `/auth/callback`;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,

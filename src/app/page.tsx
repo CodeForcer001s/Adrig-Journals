@@ -15,13 +15,55 @@ export default function DashboardPage() {
   const supabase = createClient();
   const { user, isLoading, authError } = useAuth();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<{ username: string } | null>(null);
 
   useEffect(() => {
     if (user?.id !== currentUserId) {
       setData(null);
+      setUserProfile(null);
       setCurrentUserId(user?.id || null);
     }
   }, [user]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Profile fetch error:', error.message);
+        return;
+      }
+
+      if (data) {
+        setUserProfile(data);
+      } else {
+        // If no profile exists yet, create a default one with username from email
+        const defaultUsername = user.email?.split('@')[0] || 'Writer';
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: user.id,
+            username: defaultUsername,
+            email: user.email,
+            created_at: new Date().toISOString()
+          }]);
+
+        if (insertError) {
+          console.error('Profile creation error:', insertError.message);
+        } else {
+          setUserProfile({ username: defaultUsername });
+        }
+      }
+    } catch (error) {
+      console.error('Profile fetch failed:', error);
+    }
+  };
 
   const fetchDashboardData = async () => {
     setFetchError(null);
@@ -63,7 +105,7 @@ export default function DashboardPage() {
           .select('id, title, content, date, media_base64')
           .eq('user_id', user.id)
           .order('date', { ascending: false })
-          .limit(3),
+          .limit(10),
       ]);
   
       if (countRes.error) {
@@ -100,6 +142,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isLoading) {
+      fetchUserProfile();
       fetchDashboardData();
     }
   }, [user, isLoading, currentUserId]);
@@ -126,7 +169,7 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <DashboardHeader />
+      <DashboardHeader username={userProfile?.username} />
       
       {authError && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4">
