@@ -1,8 +1,3 @@
-Sure! Here's **everything wrapped in Markdown file code block**, ready for direct copy-paste into your `README.md`:
-
-<details>
-<summary>Click to expand Markdown code</summary>
-
 ````markdown
 # 📔 Adrig-Journals ✨
 
@@ -222,9 +217,4 @@ This project is licensed under the **MIT License** – see the [LICENSE](LICENSE
 * [TailwindCSS](https://tailwindcss.com/) – A utility-first CSS framework
 * [Lucide React](https://lucide.dev/) – Beautiful & consistent icons
 
-```
-
-</details>
-
-Let me know if you want this saved as a downloadable `.md` file too.
 ```
